@@ -1,4 +1,3 @@
-
 #include "Feature.h"
 
 void
