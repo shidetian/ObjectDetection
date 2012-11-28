@@ -66,16 +66,15 @@ SupportVectorMachine::train(const std::vector<float>& labels, const FeatureSet& 
 	if(_data) delete [] _data;
 
 	/******** BEGIN TODO ********/
-	// Copy the data used for training the SVM into the libsvm data structures.
-	// Put the feature vectors in _data.value and labels in problem.y
+	// Copy the data used for training the SVM into the libsvm data structures "problem".
+	// Put the feature vectors in _data and labels in problem.y. Also, problem.x[k]
+	// should point to the address in _data where the k-th feature vector starts (i.e.,
+	// problem.x[k] = &_data[starting index of k-th feature])
 	//
 	// Hint:
 	// * Don't forget to set _data[].index to the corresponding dimension in
 	//   the original feature vector. You also need to set _data[].index to -1
 	//   right after the last element of each feature vector
-
-
-
 
 	// Vector containing all feature vectors. svm_node is a struct with
 	// two fields, index and value. Index entry indicates position 
@@ -85,7 +84,7 @@ SupportVectorMachine::train(const std::vector<float>& labels, const FeatureSet& 
 	// entry to -1
 	_data = new svm_node[nVecs * (dim + 1)]; 
 
-	printf("TODO: SupportVectorMachine.cpp:88\n"); exit(EXIT_FAILURE); 
+	printf("TODO: SupportVectorMachine.cpp:87\n"); exit(EXIT_FAILURE); 
 
 	/******** END TODO ********/
 
@@ -255,7 +254,7 @@ SupportVectorMachine::predictSlidingWindow(const Feature& feat) const
 	// Useful functions:
 	// Convolve, BandSelect, this->getWeights(), this->getBiasTerm()
 
-	printf("TODO: SupportVectorMachine.cpp:274\n"); exit(EXIT_FAILURE); 
+	printf("TODO: SupportVectorMachine.cpp:273\n"); exit(EXIT_FAILURE); 
 
 	/******** END TODO ********/
 
