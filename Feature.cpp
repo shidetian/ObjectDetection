@@ -78,7 +78,13 @@ TinyImageFeatureExtractor::operator()(const CByteImage& img_) const
 	// Useful functions:
 	// convertRGB2GrayImage, TypeConvert, WarpGlobal
 
-	printf("TODO: Feature.cpp:80\n"); exit(EXIT_FAILURE); 
+	//printf("TODO: Feature.cpp:80\n"); exit(EXIT_FAILURE);
+	int width = img_.Shape().width;
+	int height = img_.Shape().height;
+	CFloatImage tempImg(width, height, 1);
+	TypeConvert(img_, tempImg);
+	convertRGB2GrayImage(tempImg, tempImg);
+	WarpGlobal(tempImg, tinyImg, CTransform3x3::Scale(_targetW / (float) width, _targetH / (float) height), EWarpInterpolationMode::eWarpInterpCubic); 
 
 	/******** END TODO ********/
 
@@ -186,7 +192,28 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	// Useful functions:
 	// convertRGB2GrayImage, TypeConvert, WarpGlobal, Convolve
 
-	printf("TODO: Feature.cpp:198\n"); exit(EXIT_FAILURE); 
+	//printf("TODO: Feature.cpp:198\n"); exit(EXIT_FAILURE);
+	
+	//TODO: why not just use internal grayscale function?
+	//CByteImage grayscale = ConvertToGray(img_);
+	CByteImage grayscale(img_.Shape());
+	convertRGB2GrayImage(img_, grayscale);
+	CByteImage dx(img_.Shape());
+	CByteImage dy(img_.Shape());
+
+	Convolve(grayscale, dx, _kernelDx);
+	Convolve(grayscale, dy, _kernelDy);
+
+	//Third channel unused, first channel is mag, 2nd is orientation
+	CFloatImage vals(img_.Shape()); 
+
+	for (int x=0; x<img_.Shape().width; x++){
+		for (int y=0; y<img_.Shape().height; y++){
+			//TODO: check that channel starts with 0
+			vals.Pixel(x,y,0) = sqrt(dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
+
+		}
+	}
 
 	/******** END TODO ********/
 
