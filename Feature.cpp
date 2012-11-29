@@ -109,25 +109,25 @@ _nAngularBins(nAngularBins),
 _unsignedGradients(unsignedGradients),
 _cellSize(cellSize)
 {
-    _kernelDx.ReAllocate(CShape(3, 1, 1), derivKvals, false, 1);
-    _kernelDx.origin[0] = 1;
+	_kernelDx.ReAllocate(CShape(3, 1, 1), derivKvals, false, 1);
+	_kernelDx.origin[0] = 1;
 
-    _kernelDy.ReAllocate(CShape(1, 3, 1), derivKvals, false, 1);
-    _kernelDy.origin[0] = 1;
+	_kernelDy.ReAllocate(CShape(1, 3, 1), derivKvals, false, 1);
+	_kernelDy.origin[0] = 1;
 
-    // For visualization
-    // A set of patches representing the bin orientations. When drawing a hog cell 
-    // we multiply each patch by the hog bin value and add all contributions up to 
-    // form the visual representation of one cell. Full HOG is achieved by stacking 
-    // the viz for individual cells horizontally and vertically.
-    _oriMarkers.resize(_nAngularBins);
-    const int ms = 11;
-    CShape markerShape(ms, ms, 1);
+	// For visualization
+	// A set of patches representing the bin orientations. When drawing a hog cell 
+	// we multiply each patch by the hog bin value and add all contributions up to 
+	// form the visual representation of one cell. Full HOG is achieved by stacking 
+	// the viz for individual cells horizontally and vertically.
+	_oriMarkers.resize(_nAngularBins);
+	const int ms = 11;
+	CShape markerShape(ms, ms, 1);
 
-    // First patch is a horizontal line
-    _oriMarkers[0].ReAllocate(markerShape, true);
-    _oriMarkers[0].ClearPixels();
-    for(int i = 1; i < ms - 1; i++) _oriMarkers[0].Pixel(/*floor(*/ ms/2 /*)*/, i, 0) = 1;
+	// First patch is a horizontal line
+	_oriMarkers[0].ReAllocate(markerShape, true);
+	_oriMarkers[0].ClearPixels();
+	for(int i = 1; i < ms - 1; i++) _oriMarkers[0].Pixel(/*floor(*/ ms/2 /*)*/, i, 0) = 1;
 
 #if 0 // debug
 	std::cout << "DEBUG:" << __FILE__ << ":" << __LINE__ << std::endl;
@@ -147,14 +147,14 @@ _cellSize(cellSize)
 
 	// The other patches are obtained by rotating the first one
 	CTransform3x3 T = CTransform3x3::Translation((ms - 1) / 2.0, (ms - 1) / 2.0);
-    for(int angBin = 1; angBin < _nAngularBins; angBin++) {
-    	double theta;
-    	if(unsignedGradients) theta = 180.0 * (double(angBin) / _nAngularBins);
-    	else theta = 360.0 * (double(angBin) / _nAngularBins);
-   		CTransform3x3 R  = T * CTransform3x3::Rotation(theta) * T.Inverse();
+	for(int angBin = 1; angBin < _nAngularBins; angBin++) {
+		double theta;
+		if(unsignedGradients) theta = 180.0 * (double(angBin) / _nAngularBins);
+		else theta = 360.0 * (double(angBin) / _nAngularBins);
+		CTransform3x3 R  = T * CTransform3x3::Rotation(theta) * T.Inverse();
 
-   		_oriMarkers[angBin].ReAllocate(markerShape, true);
-   		_oriMarkers[angBin].ClearPixels();
+		_oriMarkers[angBin].ReAllocate(markerShape, true);
+		_oriMarkers[angBin].ClearPixels();
 
 		WarpGlobal(_oriMarkers[0], _oriMarkers[angBin], R, eWarpInterpLinear);
 
@@ -164,7 +164,7 @@ _cellSize(cellSize)
 		PRINT_EXPR(debugFName);
 		WriteFile(_oriMarkers[angBin], debugFName);
 #endif
-    }
+	}
 }
 
 Feature 
@@ -209,7 +209,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			//TODO: check that channel starts with 0
-			vals.Pixel(x,y,0) = sqrt(dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
+			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
 
 		}
 	}

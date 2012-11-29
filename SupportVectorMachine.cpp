@@ -197,9 +197,9 @@ SupportVectorMachine::save(FILE* fp) const
 	
 	fprintf(fp, "%d %d %d\n", _fVecShape.width, _fVecShape.height, _fVecShape.nBands);
 
- 	if(svm_save_model_fp(fp, _model) != 0) {
- 		throw CError("Error while trying to write model to file");
- 	}	
+	if(svm_save_model_fp(fp, _model) != 0) {
+		throw CError("Error while trying to write model to file");
+	}	
 }
 
 void 
@@ -243,7 +243,7 @@ SupportVectorMachine::predictSlidingWindow(const Feature& feat) const
 	// the dot product into a series of convolutions (remember that
 	// a convolution can be though of as a point wise dot product with
 	// the convolution kernel), each one with a different band.
- 	//
+	//
 	// Convolve each band of the SVM weights with the corresponding
 	// band in feat, and add the resulting score image. The final
 	// step is to subtract the SVM bias term given by this->getBiasTerm().
