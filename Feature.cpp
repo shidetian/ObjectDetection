@@ -212,9 +212,6 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			//TODO: check that channel starts with 0
-<<<<<<< HEAD
-			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
-=======
 			vals.Pixel(x,y,0) = sqrt(dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
 			vals.Pixel(x,y,1) = atan2(dx.Pixel(x,y,0), dy.Pixel(x,y,0))*180/M_PI + 180;
 			//take the channel with largest norm
@@ -231,8 +228,6 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	float bandWidth = 360 / _nAngularBins;
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
->>>>>>> implement HOG
-
 			for (int c = max(0, x-_cellSize/2); c<min(img_.Shape().width, x+_cellSize/2); c++){
 				for (int r = max(0, y-_cellSize/2); c<min(img_.Shape().height, y+_cellSize/2); r++){
 					//TODO bilinear interpolation
