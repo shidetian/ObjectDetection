@@ -66,7 +66,7 @@ _targetW(targetWidth), _targetH(targetHeight)
 Feature 
 TinyImageFeatureExtractor::operator()(const CByteImage& img_) const
 {
-	CFloatImage tinyImg(_targetW, _targetH, 1);
+	CFloatImage tinyImg(_targetW, _targetH, 3);
 
 	/******** BEGIN TODO ********/
 	// Compute tiny image feature, output should be _targetW by _targetH a grayscale image
@@ -80,11 +80,11 @@ TinyImageFeatureExtractor::operator()(const CByteImage& img_) const
 	//printf("TODO: Feature.cpp:80\n"); exit(EXIT_FAILURE);
 	int width = img_.Shape().width;
 	int height = img_.Shape().height;
-	CFloatImage tempImg(width, height, 1);
+	CFloatImage tempImg(width, height, 3);
 	TypeConvert(img_, tempImg);
 	convertRGB2GrayImage(tempImg, tempImg);
-	WarpGlobal(tempImg, tinyImg, CTransform3x3::Scale(_targetW / (float) width, _targetH / (float) height), EWarpInterpolationMode::eWarpInterpCubic); 
-
+	CTransform3x3 trans= CTransform3x3::Scale(_targetW/((float) width), _targetH/((float) height));
+	WarpGlobal(tempImg, tinyImg, trans, EWarpInterpolationMode::eWarpInterpCubic);
 	/******** END TODO ********/
 
 	return tinyImg;
@@ -212,26 +212,36 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			//TODO: check that channel starts with 0
-			vals.Pixel(x,y,0) = sqrt(dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
-			vals.Pixel(x,y,1) = atan2(dx.Pixel(x,y,0), dy.Pixel(x,y,0))*180/M_PI + 180;
+			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
+			vals.Pixel(x,y,1) = atan2((float)dx.Pixel(x,y,0), dy.Pixel(x,y,0))*180/M_PI + 180;
 			//take the channel with largest norm
 			for (int c=1; c<3; c++){
-				int temp = sqrt(dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dx.Pixel(x,y,c));
+				int temp = sqrt((float)dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dx.Pixel(x,y,c));
 				if (temp>vals.Pixel(x,y,0)){
 					vals.Pixel(x,y,0) = temp;
-					vals.Pixel(x,y,1) = atan2(dx.Pixel(x,y,c), dy.Pixel(x,y,c))*180/M_PI + 180;
+					vals.Pixel(x,y,1) = max((float)((atan2((float)dx.Pixel(x,y,c), dy.Pixel(x,y,c))+M_PI)*180/M_PI), 0.0f);
+					if(vals.Pixel(x,y,1)<0)
+					{
+						printf("OH NOES!!!!!");
+					}
 				}
 			}			
 		}
 	}
 	//Vote
-	float bandWidth = 360 / _nAngularBins;
+	float bandWidth = 360 / (float)_nAngularBins;
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			for (int c = max(0, x-_cellSize/2); c<min(img_.Shape().width, x+_cellSize/2); c++){
-				for (int r = max(0, y-_cellSize/2); c<min(img_.Shape().height, y+_cellSize/2); r++){
+				for (int r = max(0, y-_cellSize/2); r<min(img_.Shape().height, y+_cellSize/2); r++){
 					//TODO bilinear interpolation
-					out.Pixel(x,y, floor(vals.Pixel(c,r,1)/bandWidth))+=vals.Pixel(c,r,0);
+					float test=vals.Pixel(c,r,1)/bandWidth;
+					float testbin=floor(vals.Pixel(c,r,1)/bandWidth);
+					float testval=vals.Pixel(c,r,0);
+					if(testbin<0||testbin>_nAngularBins){
+						printf("OH NOES!");
+					}
+					out.Pixel(x,y, max(0.0f,floor(vals.Pixel(c,r,1)/bandWidth)))+=vals.Pixel(c,r,0);
 				}
 			}
 		}
@@ -241,7 +251,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			//Calc normalization
-			int sqsum = 0.42; //this is a magic number
+			float sqsum = 0.42; //this is a magic number
 			for (int b=0; b<_nAngularBins; b++){
 				sqsum+=out.Pixel(x,y,b)*out.Pixel(x,y,b);
 			}
