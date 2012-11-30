@@ -82,9 +82,24 @@ SupportVectorMachine::train(const std::vector<float>& labels, const FeatureSet& 
 	// each feature vector of size k takes up k+1 svm_node's in _data
 	// the last one being simply to indicate that the feature has ended by setting the index
 	// entry to -1
-	_data = new svm_node[nVecs * (dim + 1)]; 
-
-	printf("TODO: SupportVectorMachine.cpp:87\n"); exit(EXIT_FAILURE); 
+	_data = new svm_node[nVecs * (dim + 1)];
+	int j = 0;
+	for(int i=0; i<nVecs; i++){
+		Feature feat = fset.at(i);
+		for (int x=0; x<feat.Shape().width; x++){
+			for (int y=0; y<feat.Shape().height; y++){
+				problem.x[i] = &_data[j];
+				for(int b=0; b<feat.Shape().nBands; b++){
+					_data[j].index = b;
+					_data[j].value = feat.Pixel(x,y,b);
+					j++;
+				}
+				_data[j++].index = -1;
+			}
+		}
+	}
+	
+	//printf("TODO: SupportVectorMachine.cpp:87\n"); exit(EXIT_FAILURE); 
 
 	/******** END TODO ********/
 
@@ -223,7 +238,7 @@ SupportVectorMachine::predictSlidingWindow(const Feature& feat) const
 	score.ClearPixels();
 
 	/******** BEGIN TODO ********/
-	// Sliding window prediction. 
+	// Sliding window prediction.
 	//
 	// In this project we are using a linear SVM. This means that 
 	// it's classification function is very simple, consisting of a
