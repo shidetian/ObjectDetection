@@ -273,15 +273,15 @@ SupportVectorMachine::predictSlidingWindow(const Feature& feat) const
 	//printf("TODO: SupportVectorMachine.cpp:273\n"); exit(EXIT_FAILURE); 
 	Feature weights = getWeights();
 	for (int b=0; b<weights.Shape().nBands; b++){
-		CFloatImage currentBand = CFloatImage(weights.Shape().width, weights.Shape().height, 1);
-		CFloatImage convolved = CFloatImage(feat.Shape());
-		CFloatImage oneChannelConvolved = CFloatImage(feat.Shape().width, feat.Shape().height, 1);
-		BandSelect(weights, currentBand, b, 0);
-		currentBand.origin[0] = weights.origin[0];
-		currentBand.origin[1] = weights.origin[1];
-		Convolve(feat, convolved, currentBand);
-		BandSelect(convolved, oneChannelConvolved, b, 0);
-		score += oneChannelConvolved;
+		CFloatImage currentBandWeights = CFloatImage(weights.Shape().width, weights.Shape().height, 1);
+		CFloatImage currentBandFeatures = CFloatImage(feat.Shape().width, weights.Shape().height, 1);
+		CFloatImage convolved = CFloatImage(feat.Shape().width, weights.Shape().height, 1);;
+		BandSelect(weights, currentBandWeights, b, 0);
+		BandSelect(feat, currentBandFeatures, b, 0);
+		currentBandWeights.origin[0] = weights.origin[0];
+		currentBandWeights.origin[1] = weights.origin[1];
+		Convolve(feat, convolved, currentBandWeights);
+		score += convolved;
 	}
 	score-=getBiasTerm();
 	/******** END TODO ********/
