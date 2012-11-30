@@ -207,7 +207,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	CFloatImage vals(img_.Shape()); 
 
 	//Output feature image, one channel for each bin
-	CFloatImage out(img_.Shape().width, img_.Shape().height, _nAngularBins);
+	CFloatImage out(img_.Shape().width/_cellSize, img_.Shape().height/_cellSize, _nAngularBins);
 	out.ClearPixels();
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
@@ -230,10 +230,12 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	}
 	//Vote
 	float bandWidth = 360 / (float)_nAngularBins;
-	for (int x=0; x<img_.Shape().width; x++){
-		for (int y=0; y<img_.Shape().height; y++){
-			for (int c = max(0, x-_cellSize/2); c<min(img_.Shape().width, x+_cellSize/2); c++){
-				for (int r = max(0, y-_cellSize/2); r<min(img_.Shape().height, y+_cellSize/2); r++){
+	for (int x=0; x<out.Shape().width; x++){
+		for (int y=0; y<out.Shape().height; y++){
+			int ox = x*_cellSize + _cellSize/2;
+			int oy = y*_cellSize + _cellSize/2;
+			for (int c = max(0, ox-_cellSize/2); c<min(img_.Shape().width, ox+_cellSize/2); c++){
+				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2); r++){		
 					//TODO bilinear interpolation
 					float test=vals.Pixel(c,r,1)/bandWidth;
 					float testbin=floor(vals.Pixel(c,r,1)/bandWidth);
@@ -248,8 +250,8 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	}
 
 	//Normalization
-	for (int x=0; x<img_.Shape().width; x++){
-		for (int y=0; y<img_.Shape().height; y++){
+	for (int x=0; x<out.Shape().width; x++){
+		for (int y=0; y<out.Shape().height; y++){
 			//Calc normalization
 			float sqsum = 0.42; //this is a magic number
 			for (int b=0; b<_nAngularBins; b++){
