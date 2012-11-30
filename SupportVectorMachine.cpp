@@ -95,9 +95,9 @@ SupportVectorMachine::train(const std::vector<float>& labels, const FeatureSet& 
 					_data[j].value = feat.Pixel(x,y,b);
 					j++;
 				}
-				_data[j++].index = -1;
 			}
 		}
+		_data[j++].index = -1;
 	}
 	
 	//printf("TODO: SupportVectorMachine.cpp:87\n"); exit(EXIT_FAILURE); 

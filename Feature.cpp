@@ -210,6 +210,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	//Output feature image, one channel for each bin
 	Feature* outpointer= (new CFloatImage(img_.Shape().width/_cellSize, img_.Shape().height/_cellSize, _nAngularBins));
 	Feature out=*outpointer;
+	float bandWidth = _unsignedGradients ? 180/(float)_nAngularBins : 360/ (float)_nAngularBins;
 	out.ClearPixels();
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
@@ -233,16 +234,10 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 				}
 			}	
 			vals.Pixel(x,y,1) = vals.Pixel(x,y,1) * 180.0f / M_PI;
-			if(_unsignedGradients){
-				//printf("UNSIGNED!!!!");
-				if (vals.Pixel(x,y,1)>180){
-					vals.Pixel(x,y,1)-=180;
-				}
-			}
+			//Modified here
 		}
 	}
 	//Vote
-	float bandWidth = _unsignedGradients ? 180/(float)_nAngularBins : 360/ (float)_nAngularBins;
 	for (int x=0; x<out.Shape().width; x++){
 		for (int y=0; y<out.Shape().height; y++){
 			int ox = x*_cellSize + _cellSize/2;
@@ -250,13 +245,18 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			for (int c = max(0, ox-_cellSize/2); c<min(img_.Shape().width, ox+_cellSize/2); c++){
 				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2); r++){		
 					//TODO bilinear interpolation
-					
+					if(_unsignedGradients){
+						//printf("UNSIGNED!!!!");
+						if (vals.Pixel(c,r,1)>180){
+							vals.Pixel(c,r,1)-=180;
+						}
+					}
 					//Sanity check values
 					float test=vals.Pixel(c,r,1)/bandWidth;
-					float testbin=floor(vals.Pixel(c,r,1)/bandWidth);
+					float testbin=max(0.0f,floor(vals.Pixel(c,r,1)/bandWidth));
 					float testval=vals.Pixel(c,r,0);
 					if(testbin<0||testbin>_nAngularBins){
-						printf("OH NOES!");
+						printf("OH NOES! bin was %f!!!!\n", testbin);
 					}
 
 					//Find the two nearest bucket centers and distribute vote
@@ -317,6 +317,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			}
 		}
 	}
+	//delete valspointer;
 	return out;
 	/******** END TODO ********/
 
