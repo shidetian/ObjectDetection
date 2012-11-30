@@ -213,7 +213,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 		for (int y=0; y<img_.Shape().height; y++){
 			//TODO: check that channel starts with 0
 			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dy.Pixel(x,y,0));
-			vals.Pixel(x,y,1) = atan2((float)dx.Pixel(x,y,0), dy.Pixel(x,y,0))*180/M_PI + 180;
+			vals.Pixel(x,y,1) = atan2(dy.Pixel(x,y,0),(float)dx.Pixel(x,y,0));
 			if(vals.Pixel(x,y,1)<0)
 			{
 				vals.Pixel(x,y,1)+=2*M_PI;
@@ -223,7 +223,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 				int temp = sqrt((float)dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dy.Pixel(x,y,c));
 				if (temp>vals.Pixel(x,y,0)){
 					vals.Pixel(x,y,0) = temp;
-					vals.Pixel(x,y,1) = (float)((atan2((float)dx.Pixel(x,y,c), dy.Pixel(x,y,c))));
+					vals.Pixel(x,y,1) = (float)((atan2(dy.Pixel(x,y,c),(float)dx.Pixel(x,y,c))));
 					if(vals.Pixel(x,y,1)<0)
 					{
 						vals.Pixel(x,y,1)+=2*M_PI;
@@ -232,7 +232,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			}	
 			vals.Pixel(x,y,1) = vals.Pixel(x,y,1) * 180.0f / M_PI;
 			if(_unsignedGradients){
-				printf("UNSIGNED!!!!");
+				//printf("UNSIGNED!!!!");
 				if (vals.Pixel(x,y,1)>180){
 					vals.Pixel(x,y,1)-=180;
 				}
@@ -240,7 +240,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 		}
 	}
 	//Vote
-	float bandWidth = 360/ (float)_nAngularBins;
+	float bandWidth = _unsignedGradients ? 180/(float)_nAngularBins : 360/ (float)_nAngularBins;
 	for (int x=0; x<out.Shape().width; x++){
 		for (int y=0; y<out.Shape().height; y++){
 			int ox = x*_cellSize + _cellSize/2;
