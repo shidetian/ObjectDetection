@@ -248,13 +248,53 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			for (int c = max(0, ox-_cellSize/2); c<min(img_.Shape().width, ox+_cellSize/2); c++){
 				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2); r++){		
 					//TODO bilinear interpolation
+					
+					//Sanity check values
 					float test=vals.Pixel(c,r,1)/bandWidth;
 					float testbin=floor(vals.Pixel(c,r,1)/bandWidth);
 					float testval=vals.Pixel(c,r,0);
 					if(testbin<0||testbin>_nAngularBins){
 						printf("OH NOES!");
 					}
-					out.Pixel(x,y, max(0.0f,floor(vals.Pixel(c,r,1)/bandWidth)))+=vals.Pixel(c,r,0);
+
+					//Find the two nearest bucket centers and distribute vote
+					float angle = vals.Pixel(c,r,1);
+					int binactual=max(0,(int)floor(angle/bandWidth));
+					float binactualcenter=(bandWidth/2)+(binactual*bandWidth);
+					//We do not wrap around. Votes at the far ends of the spectrum are dedicated fully to one bucket.
+					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins))
+						out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0);
+					else {
+						float binsecondarycenter, distributionscalefactor;
+						if(!_unsignedGradients&&binactual<=0&&angle<binactualcenter)
+						{
+							binsecondarycenter=(bandWidth/2)+((_nAngularBins-1)*bandWidth);
+							distributionscalefactor=(angle-binsecondarycenter)/bandWidth;
+							out.Pixel(x,y, binactual-1)+=vals.Pixel(c,r,0)*distributionscalefactor;
+							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*(1-distributionscalefactor);
+						}
+						else if(!_unsignedGradients&&binactual>=_nAngularBins-1&&angle>binactualcenter)
+						{
+							binsecondarycenter=(bandWidth/2)+(0*bandWidth);
+							distributionscalefactor=(angle-binsecondarycenter)/bandWidth;
+							out.Pixel(x,y, binactual-1)+=vals.Pixel(c,r,0)*distributionscalefactor;
+							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*(1-distributionscalefactor);
+						}
+						else if(binactualcenter>angle)
+						{
+							binsecondarycenter=(bandWidth/2)+((binactual-1)*bandWidth);
+							distributionscalefactor=(angle-binsecondarycenter)/bandWidth;
+							out.Pixel(x,y, binactual-1)+=vals.Pixel(c,r,0)*distributionscalefactor;
+							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*(1-distributionscalefactor);
+						}
+						else
+						{
+							binsecondarycenter=(bandWidth/2)+((binactual+1)*bandWidth);
+							distributionscalefactor=(angle-binactualcenter)/bandWidth;
+							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*distributionscalefactor;
+							out.Pixel(x,y, binactual+1)+=vals.Pixel(c,r,0)*distributionscalefactor;
+						}
+					}
 				}
 			}
 		}
