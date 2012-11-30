@@ -89,6 +89,7 @@ SupportVectorMachine::train(const std::vector<float>& labels, const FeatureSet& 
 		for (int x=0; x<feat.Shape().width; x++){
 			for (int y=0; y<feat.Shape().height; y++){
 				problem.x[i] = &_data[j];
+				problem.y[i] = labels.at(i);
 				for(int b=0; b<feat.Shape().nBands; b++){
 					_data[j].index = b;
 					_data[j].value = feat.Pixel(x,y,b);
