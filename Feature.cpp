@@ -234,7 +234,6 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 				}
 			}	
 			vals.Pixel(x,y,1) = vals.Pixel(x,y,1) * 180.0f / M_PI;
-			//Modified here
 		}
 	}
 	//Vote
@@ -243,14 +242,15 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			int ox = x*_cellSize + _cellSize/2;
 			int oy = y*_cellSize + _cellSize/2;
 			for (int c = max(0, ox-_cellSize/2); c<min(img_.Shape().width, ox+_cellSize/2); c++){
-				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2); r++){		
-					//TODO bilinear interpolation
+				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2); r++){
+					
+					//Insanity check
 					if(_unsignedGradients){
-						//printf("UNSIGNED!!!!");
 						if (vals.Pixel(c,r,1)>180){
 							vals.Pixel(c,r,1)-=180;
 						}
 					}
+
 					//Sanity check values
 					float test=vals.Pixel(c,r,1)/bandWidth;
 					float testbin=max(0.0f,floor(vals.Pixel(c,r,1)/bandWidth));
@@ -264,7 +264,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 					int binactual=max(0,(int)floor(angle/bandWidth));
 					float binactualcenter=(bandWidth/2)+(binactual*bandWidth);
 					//We do not wrap around. Votes at the far ends of the spectrum are dedicated fully to one bucket.
-					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins))
+					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins)||true)
 						out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0);
 					else {
 						float binsecondarycenter, distributionscalefactor;
