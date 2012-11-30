@@ -214,6 +214,10 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			//TODO: check that channel starts with 0
 			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dy.Pixel(x,y,0));
 			vals.Pixel(x,y,1) = atan2((float)dx.Pixel(x,y,0), dy.Pixel(x,y,0))*180/M_PI + 180;
+			if(vals.Pixel(x,y,1)<0)
+			{
+				vals.Pixel(x,y,1)+=2*M_PI;
+			}
 			//take the channel with largest norm
 			for (int c=1; c<3; c++){
 				int temp = sqrt((float)dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dy.Pixel(x,y,c));
@@ -224,15 +228,19 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 					{
 						vals.Pixel(x,y,1)+=2*M_PI;
 					}
-					if(_unsignedGradients){
-						printf("UNSIGNED!!!!");
-					}
 				}
-			}			
+			}	
+			vals.Pixel(x,y,1) = vals.Pixel(x,y,1) * 180.0f / M_PI;
+			if(_unsignedGradients){
+				printf("UNSIGNED!!!!");
+				if (vals.Pixel(x,y,1)>180){
+					vals.Pixel(x,y,1)-=180;
+				}
+			}
 		}
 	}
 	//Vote
-	float bandWidth = 2*M_PI/ (float)_nAngularBins;
+	float bandWidth = 360/ (float)_nAngularBins;
 	for (int x=0; x<out.Shape().width; x++){
 		for (int y=0; y<out.Shape().height; y++){
 			int ox = x*_cellSize + _cellSize/2;
