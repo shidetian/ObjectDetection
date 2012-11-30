@@ -195,25 +195,64 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	
 	//TODO: why not just use internal grayscale function?
 	//CByteImage grayscale = ConvertToGray(img_);
-	CByteImage grayscale(img_.Shape());
-	convertRGB2GrayImage(img_, grayscale);
+	//CByteImage grayscale(img_.Shape());
+	//convertRGB2GrayImage(img_, grayscale);
 	CByteImage dx(img_.Shape());
 	CByteImage dy(img_.Shape());
 
-	Convolve(grayscale, dx, _kernelDx);
-	Convolve(grayscale, dy, _kernelDy);
+	Convolve(img_, dx, _kernelDx);
+	Convolve(img_, dy, _kernelDy);
 
 	//Third channel unused, first channel is mag, 2nd is orientation
 	CFloatImage vals(img_.Shape()); 
 
+	//Output feature image, one channel for each bin
+	CFloatImage out(img_.Shape().width, img_.Shape().height, _nAngularBins);
+	out.ClearPixels();
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			//TODO: check that channel starts with 0
-			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
-
+			vals.Pixel(x,y,0) = sqrt(dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
+			vals.Pixel(x,y,1) = atan2(dx.Pixel(x,y,0), dy.Pixel(x,y,0))*180/M_PI + 180;
+			//take the channel with largest norm
+			for (int c=1; c<3; c++){
+				int temp = sqrt(dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dx.Pixel(x,y,c));
+				if (temp>vals.Pixel(x,y,0)){
+					vals.Pixel(x,y,0) = temp;
+					vals.Pixel(x,y,1) = atan2(dx.Pixel(x,y,c), dy.Pixel(x,y,c))*180/M_PI + 180;
+				}
+			}			
+		}
+	}
+	//Vote
+	float bandWidth = 360 / _nAngularBins;
+	for (int x=0; x<img_.Shape().width; x++){
+		for (int y=0; y<img_.Shape().height; y++){
+			for (int c = max(0, x-_cellSize/2); c<min(img_.Shape().width, x+_cellSize/2); c++){
+				for (int r = max(0, y-_cellSize/2); c<min(img_.Shape().height, y+_cellSize/2); r++){
+					//TODO bilinear interpolation
+					out.Pixel(x,y, floor(vals.Pixel(c,r,1)/bandWidth))+=vals.Pixel(c,r,0);
+				}
+			}
 		}
 	}
 
+	//Normalization
+	for (int x=0; x<img_.Shape().width; x++){
+		for (int y=0; y<img_.Shape().height; y++){
+			//Calc normalization
+			int sqsum = 0.42; //this is a magic number
+			for (int b=0; b<_nAngularBins; b++){
+				sqsum+=out.Pixel(x,y,b)*out.Pixel(x,y,b);
+			}
+			sqsum = sqrt(sqsum);
+			//Apply normalization
+			for (int b=0; b<_nAngularBins; b++){
+				out.Pixel(x,y,b)/=sqsum;
+			}
+		}
+	}
+	return out;
 	/******** END TODO ********/
 
 }
