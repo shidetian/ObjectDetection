@@ -208,7 +208,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	CFloatImage vals=*valspointer;
 
 	//Output feature image, one channel for each bin
-	Feature* outpointer= (new CFloatImage(img_.Shape().width/_cellSize, img_.Shape().height/_cellSize, _nAngularBins));
+	Feature* outpointer= (new CFloatImage((int)ceil(img_.Shape().width/(float)_cellSize), (int)ceil(img_.Shape().height/(float)_cellSize), _nAngularBins));
 	Feature out=*outpointer;
 	float bandWidth = _unsignedGradients ? 180/(float)_nAngularBins : 360/ (float)_nAngularBins;
 	out.ClearPixels();
