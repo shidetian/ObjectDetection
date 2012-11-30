@@ -307,13 +307,22 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 		for (int y=0; y<out.Shape().height; y++){
 			//Calc normalization
 			float sqsum = 0.42; //this is a magic number
-			for (int b=0; b<_nAngularBins; b++){
-				sqsum+=out.Pixel(x,y,b)*out.Pixel(x,y,b);
+			for (int cx=max(0,x-1); cx<min(out.Shape().width, x+1); cx++){
+				for (int cy=max(0, y-1); cy<min(out.Shape().height, y+1); cy++){
+					for (int b=0; b<_nAngularBins; b++){
+						sqsum+=out.Pixel(cx,cy,b)*out.Pixel(cx,cy,b);
+					}
+				}
 			}
+
 			sqsum = sqrt(sqsum);
 			//Apply normalization
-			for (int b=0; b<_nAngularBins; b++){
-				out.Pixel(x,y,b)/=sqsum;
+			for (int cx=max(0,x-1); cx<min(out.Shape().width, x+1); cx++){
+				for (int cy=max(0, y-1); cy<min(out.Shape().height, y+1); cy++){
+					for (int b=0; b<_nAngularBins; b++){
+						out.Pixel(cx,cy,b)/=sqsum;
+					}
+				}
 			}
 		}
 	}
