@@ -212,17 +212,20 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			//TODO: check that channel starts with 0
-			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dx.Pixel(x,y,0));
+			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dy.Pixel(x,y,0));
 			vals.Pixel(x,y,1) = atan2((float)dx.Pixel(x,y,0), dy.Pixel(x,y,0))*180/M_PI + 180;
 			//take the channel with largest norm
 			for (int c=1; c<3; c++){
-				int temp = sqrt((float)dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dx.Pixel(x,y,c));
+				int temp = sqrt((float)dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dy.Pixel(x,y,c));
 				if (temp>vals.Pixel(x,y,0)){
 					vals.Pixel(x,y,0) = temp;
 					vals.Pixel(x,y,1) = (float)((atan2((float)dx.Pixel(x,y,c), dy.Pixel(x,y,c))));
 					if(vals.Pixel(x,y,1)<0)
 					{
 						vals.Pixel(x,y,1)+=2*M_PI;
+					}
+					if(_unsignedGradients){
+						printf("UNSIGNED!!!!");
 					}
 				}
 			}			
