@@ -302,17 +302,18 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 		}
 	}
 
-	//Normalization (L1 norm sqrt)
+	//Normalization
 	for (int x=0; x<out.Shape().width; x++){
 		for (int y=0; y<out.Shape().height; y++){
 			//Calc normalization
-			float norm = 0.42; //this is a magic number
+			float sqsum = 0.42; //this is a magic number
 			for (int b=0; b<_nAngularBins; b++){
-				norm+=out.Pixel(x,y,b);
+				sqsum+=out.Pixel(x,y,b)*out.Pixel(x,y,b);
 			}
+			sqsum = sqrt(sqsum);
 			//Apply normalization
 			for (int b=0; b<_nAngularBins; b++){
-				out.Pixel(x,y,b)=sqrt(out.Pixel(x,y,b)/norm);
+				out.Pixel(x,y,b)/=sqsum;
 			}
 		}
 	}
