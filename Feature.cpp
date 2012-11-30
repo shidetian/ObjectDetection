@@ -234,6 +234,12 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 				}
 			}	
 			vals.Pixel(x,y,1) = vals.Pixel(x,y,1) * 180.0f / M_PI;
+			//Insanity check
+			if(_unsignedGradients){
+				if (vals.Pixel(x,y,1)>180){
+					vals.Pixel(x,y,1)-=180;
+				}
+			}
 		}
 	}
 	//Vote
@@ -241,15 +247,10 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 		for (int y=0; y<out.Shape().height; y++){
 			int ox = x*_cellSize + _cellSize/2;
 			int oy = y*_cellSize + _cellSize/2;
-			for (int c = max(0, ox-_cellSize/2); c<min(img_.Shape().width, ox+_cellSize/2); c++){
-				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2); r++){
+			for (int c = max(0, ox-_cellSize/2); c<min(img_.Shape().width, ox+_cellSize/2+1); c++){
+				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2+1); r++){
 					
-					//Insanity check
-					if(_unsignedGradients){
-						if (vals.Pixel(c,r,1)>180){
-							vals.Pixel(c,r,1)-=180;
-						}
-					}
+					
 
 					//Sanity check values
 					float test=vals.Pixel(c,r,1)/bandWidth;
@@ -263,38 +264,40 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 					float angle = vals.Pixel(c,r,1);
 					int binactual=max(0,(int)floor(angle/bandWidth));
 					float binactualcenter=(bandWidth/2)+(binactual*bandWidth);
+					
+					float gaussianweight=vals.Pixel(c,r,0)*(1+0.5-sqrt(((c-ox)*(c-ox)+(r-oy)*(r-oy))/((_cellSize/2.0f)*(_cellSize/2.0f)*2.0f)));
 					//We do not wrap around. Votes at the far ends of the spectrum are dedicated fully to one bucket.
-					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins)||true)
-						out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0);
+					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins))
+						out.Pixel(x,y, binactual)+=gaussianweight;
 					else {
 						float binsecondarycenter, distributionscalefactor;
 						if(!_unsignedGradients&&binactual<=0&&angle<binactualcenter)
 						{
 							binsecondarycenter=(bandWidth/2)+((_nAngularBins-1)*bandWidth);
 							distributionscalefactor=(angle-binsecondarycenter)/bandWidth;
-							out.Pixel(x,y, binactual-1)+=vals.Pixel(c,r,0)*distributionscalefactor;
-							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*(1-distributionscalefactor);
+							out.Pixel(x,y, binactual-1)+=gaussianweight*distributionscalefactor;
+							out.Pixel(x,y, binactual)+=gaussianweight*(1-distributionscalefactor);
 						}
 						else if(!_unsignedGradients&&binactual>=_nAngularBins-1&&angle>binactualcenter)
 						{
 							binsecondarycenter=(bandWidth/2)+(0*bandWidth);
 							distributionscalefactor=(angle-binsecondarycenter)/bandWidth;
-							out.Pixel(x,y, binactual-1)+=vals.Pixel(c,r,0)*distributionscalefactor;
-							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*(1-distributionscalefactor);
+							out.Pixel(x,y, binactual-1)+=gaussianweight*distributionscalefactor;
+							out.Pixel(x,y, binactual)+=gaussianweight*(1-distributionscalefactor);
 						}
 						else if(binactualcenter>angle)
 						{
 							binsecondarycenter=(bandWidth/2)+((binactual-1)*bandWidth);
 							distributionscalefactor=(angle-binsecondarycenter)/bandWidth;
-							out.Pixel(x,y, binactual-1)+=vals.Pixel(c,r,0)*distributionscalefactor;
-							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*(1-distributionscalefactor);
+							out.Pixel(x,y, binactual-1)+=gaussianweight*distributionscalefactor;
+							out.Pixel(x,y, binactual)+=gaussianweight*(1-distributionscalefactor);
 						}
 						else
 						{
 							binsecondarycenter=(bandWidth/2)+((binactual+1)*bandWidth);
 							distributionscalefactor=(angle-binactualcenter)/bandWidth;
-							out.Pixel(x,y, binactual)+=vals.Pixel(c,r,0)*distributionscalefactor;
-							out.Pixel(x,y, binactual+1)+=vals.Pixel(c,r,0)*distributionscalefactor;
+							out.Pixel(x,y, binactual)+=gaussianweight*distributionscalefactor;
+							out.Pixel(x,y, binactual+1)+=gaussianweight*distributionscalefactor;
 						}
 					}
 				}
@@ -307,8 +310,8 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 		for (int y=0; y<out.Shape().height; y++){
 			//Calc normalization
 			float sqsum = 0.0042; //this is a magic number
-			for (int cx=max(0,x-1); cx<=min(out.Shape().width, x+1); cx++){
-				for (int cy=max(0, y-1); cy<=min(out.Shape().height, y+1); cy++){
+			for (int cx=max(0,x-1); cx<min(out.Shape().width, x+2); cx++){
+				for (int cy=max(0, y-1); cy<min(out.Shape().height, y+2); cy++){
 					for (int b=0; b<_nAngularBins; b++){
 						sqsum+=out.Pixel(cx,cy,b)*out.Pixel(cx,cy,b);
 					}
