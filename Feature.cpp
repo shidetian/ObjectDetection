@@ -67,7 +67,6 @@ Feature
 TinyImageFeatureExtractor::operator()(const CByteImage& img_) const
 {
 	CFloatImage tinyImg(_targetW, _targetH, 3);
-
 	/******** BEGIN TODO ********/
 	// Compute tiny image feature, output should be _targetW by _targetH a grayscale image
 	// Steps are:
@@ -81,10 +80,11 @@ TinyImageFeatureExtractor::operator()(const CByteImage& img_) const
 	int width = img_.Shape().width;
 	int height = img_.Shape().height;
 	CFloatImage tempImg(width, height, 3);
+	CFloatImage temp2Img(width, height, 3);
 	TypeConvert(img_, tempImg);
-	convertRGB2GrayImage(tempImg, tempImg);
+	convertRGB2GrayImage(tempImg, temp2Img);
 	CTransform3x3 trans= CTransform3x3::Scale(_targetW/((float) width), _targetH/((float) height));
-	WarpGlobal(tempImg, tinyImg, trans, EWarpInterpolationMode::eWarpInterpCubic);
+	WarpGlobal(temp2Img, tinyImg, trans.Inverse(), EWarpInterpolationMode::eWarpInterpLinear);
 	/******** END TODO ********/
 
 	return tinyImg;
