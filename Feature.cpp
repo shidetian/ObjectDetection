@@ -204,10 +204,12 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	Convolve(img_, dy, _kernelDy);
 
 	//Third channel unused, first channel is mag, 2nd is orientation
-	CFloatImage vals(img_.Shape()); 
+	CFloatImage* valspointer= new CFloatImage(img_.Shape());
+	CFloatImage vals=*valspointer;
 
 	//Output feature image, one channel for each bin
-	CFloatImage out(img_.Shape().width/_cellSize, img_.Shape().height/_cellSize, _nAngularBins);
+	Feature* outpointer= (new CFloatImage(img_.Shape().width/_cellSize, img_.Shape().height/_cellSize, _nAngularBins));
+	Feature out=*outpointer;
 	out.ClearPixels();
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
