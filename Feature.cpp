@@ -204,26 +204,25 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 	Convolve(img_, dy, _kernelDy);
 
 	//Third channel unused, first channel is mag, 2nd is orientation
-	CFloatImage* valspointer= new CFloatImage(img_.Shape());
-	CFloatImage vals=*valspointer;
-
+	CFloatImage vals=CFloatImage(img_.Shape().width, img_.Shape().height, 2);
 	//Output feature image, one channel for each bin
-	Feature* outpointer= (new CFloatImage((int)ceil(img_.Shape().width/(float)_cellSize), (int)ceil(img_.Shape().height/(float)_cellSize), _nAngularBins));
-	Feature out=*outpointer;
+	Feature out= CFloatImage((int)ceil(img_.Shape().width/(float)_cellSize), (int)ceil(img_.Shape().height/(float)_cellSize), _nAngularBins);
 	float bandWidth = _unsignedGradients ? 180/(float)_nAngularBins : 360/ (float)_nAngularBins;
+	float ultimatemagnitude=-1, ultimateangle=-1;
+	vals.ClearPixels();
 	out.ClearPixels();
 	for (int x=0; x<img_.Shape().width; x++){
 		for (int y=0; y<img_.Shape().height; y++){
 			//TODO: check that channel starts with 0
 			vals.Pixel(x,y,0) = sqrt((float)dx.Pixel(x,y,0)*dx.Pixel(x,y,0)+dy.Pixel(x,y,0)*dy.Pixel(x,y,0));
-			vals.Pixel(x,y,1) = atan2(dy.Pixel(x,y,0),(float)dx.Pixel(x,y,0));
+			vals.Pixel(x,y,1) = vals.Pixel(x,y,0) != 0 ? atan2(dy.Pixel(x,y,0),(float)dx.Pixel(x,y,0)) : 0;
 			if(vals.Pixel(x,y,1)<0)
 			{
 				vals.Pixel(x,y,1)+=2*M_PI;
 			}
 			//take the channel with largest norm
-			for (int c=1; c<3; c++){
-				int temp = sqrt((float)dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dy.Pixel(x,y,c));
+			for (int c=1; c<img_.Shape().nBands; c++){
+				float temp = sqrt((float)dx.Pixel(x,y,c)*dx.Pixel(x,y,c)+dy.Pixel(x,y,c)*dy.Pixel(x,y,c));
 				if (temp>vals.Pixel(x,y,0)){
 					vals.Pixel(x,y,0) = temp;
 					vals.Pixel(x,y,1) = (float)((atan2(dy.Pixel(x,y,c),(float)dx.Pixel(x,y,c))));
@@ -232,7 +231,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 						vals.Pixel(x,y,1)+=2*M_PI;
 					}
 				}
-			}	
+			}
 			vals.Pixel(x,y,1) = vals.Pixel(x,y,1) * 180.0f / M_PI;
 			//Insanity check
 			if(_unsignedGradients){
@@ -250,24 +249,20 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			for (int c = max(0, ox-_cellSize/2); c<min(img_.Shape().width, ox+_cellSize/2+1); c++){
 				for (int r = max(0, oy-_cellSize/2); r<min(img_.Shape().height, oy+_cellSize/2+1); r++){
 					
-					
+					float angle = vals.Pixel(c,r,1);
+					int binactual=max(0,(int)floor(angle/bandWidth));
+					float binactualcenter=(bandWidth/2)+(binactual*bandWidth);
+					float gaussianweight=vals.Pixel(c,r,0)*(1+0.5-sqrt(((c-ox)*(c-ox)+(r-oy)*(r-oy))/((_cellSize/2.0f)*(_cellSize/2.0f)*2.0f)));
 
 					//Sanity check values
 					float test=vals.Pixel(c,r,1)/bandWidth;
 					float testbin=max(0.0f,floor(vals.Pixel(c,r,1)/bandWidth));
 					float testval=vals.Pixel(c,r,0);
-					if(testbin<0||testbin>_nAngularBins){
-						printf("OH NOES! bin was %f!!!!\n", testbin);
-					}
+					
 
 					//Find the two nearest bucket centers and distribute vote
-					float angle = vals.Pixel(c,r,1);
-					int binactual=max(0,(int)floor(angle/bandWidth));
-					float binactualcenter=(bandWidth/2)+(binactual*bandWidth);
-					
-					float gaussianweight=vals.Pixel(c,r,0)*(1+0.5-sqrt(((c-ox)*(c-ox)+(r-oy)*(r-oy))/((_cellSize/2.0f)*(_cellSize/2.0f)*2.0f)));
 					//We do not wrap around. Votes at the far ends of the spectrum are dedicated fully to one bucket.
-					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins))
+					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins)||true)
 						out.Pixel(x,y, binactual)+=gaussianweight;
 					else {
 						float binsecondarycenter, distributionscalefactor;
@@ -329,7 +324,6 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 			//}
 		}
 	}
-	//delete valspointer;
 	return out;
 	/******** END TODO ********/
 
