@@ -262,9 +262,9 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 
 					//Find the two nearest bucket centers and distribute vote
 					//We do not wrap around. Votes at the far ends of the spectrum are dedicated fully to one bucket.
-					if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins)||true)
-						out.Pixel(x,y, binactual)+=gaussianweight;
-					else {
+					//if(_unsignedGradients&&(binactual<=0||binactual>=_nAngularBins)||true)
+					out.Pixel(x,y, binactual)+=gaussianweight;
+					/*else {
 						float binsecondarycenter, distributionscalefactor;
 						if(!_unsignedGradients&&binactual<=0&&angle<binactualcenter)
 						{
@@ -294,7 +294,7 @@ HOGFeatureExtractor::operator()(const CByteImage& img_) const
 							out.Pixel(x,y, binactual)+=gaussianweight*distributionscalefactor;
 							out.Pixel(x,y, binactual+1)+=gaussianweight*distributionscalefactor;
 						}
-					}
+					}*/
 				}
 			}
 		}

@@ -312,6 +312,7 @@ main(int argc, char **argv)
 				return mainVizSVMModel(argc, argv);
 			} else {
 				printUsage(argv[0]);
+				system("PAUSE");
 				return EXIT_FAILURE;
 			}
 		} 
@@ -319,7 +320,9 @@ main(int argc, char **argv)
 		std::cerr << "===================================================" << std::endl;
 		std::cerr << "ERROR: Uncought exception:\n\t" << err.message << std::endl;
 		std::cerr << "===================================================" << std::endl;
+		system("PAUSE");
 		return EXIT_FAILURE;
 	}
+	system("PAUSE");
 	return EXIT_SUCCESS;
 }

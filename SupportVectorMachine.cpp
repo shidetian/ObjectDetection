@@ -86,14 +86,16 @@ SupportVectorMachine::train(const std::vector<float>& labels, const FeatureSet& 
 	int j = 0;
 	for(int i=0; i<nVecs; i++){
 		Feature feat = fset.at(i);
-		for (int x=0; x<feat.Shape().width; x++){
-			for (int y=0; y<feat.Shape().height; y++){
-				problem.x[i] = &_data[j];
-				problem.y[i] = labels.at(i);
+		int index=0;
+		problem.x[i] = &_data[j];
+		problem.y[i] = labels.at(i);
+		for (int y=0; y<feat.Shape().height; y++){
+			for (int x=0; x<feat.Shape().width; x++){
 				for(int b=0; b<feat.Shape().nBands; b++){
-					_data[j].index = b;
+					_data[j].index = index;
 					_data[j].value = feat.Pixel(x,y,b);
 					j++;
+					index++;
 				}
 			}
 		}
@@ -272,16 +274,22 @@ SupportVectorMachine::predictSlidingWindow(const Feature& feat) const
 
 	//printf("TODO: SupportVectorMachine.cpp:273\n"); exit(EXIT_FAILURE); 
 	Feature weights = getWeights();
-	for (int b=0; b<weights.Shape().nBands; b++){
+	for (int b=0; b<feat.Shape().nBands; b++){
 		CFloatImage currentBandWeights = CFloatImage(weights.Shape().width, weights.Shape().height, 1);
-		CFloatImage currentBandFeatures = CFloatImage(feat.Shape().width, weights.Shape().height, 1);
-		CFloatImage convolved = CFloatImage(feat.Shape().width, weights.Shape().height, 1);;
+		CFloatImage currentBandFeatures = CFloatImage(feat.Shape().width, feat.Shape().height, 1);
+		CFloatImage convolved = CFloatImage(CShape(feat.Shape().width, feat.Shape().height, 1));
+		CFloatImage final(CShape(feat.Shape().width, feat.Shape().height, 1));
 		BandSelect(weights, currentBandWeights, b, 0);
 		BandSelect(feat, currentBandFeatures, b, 0);
 		currentBandWeights.origin[0] = weights.origin[0];
 		currentBandWeights.origin[1] = weights.origin[1];
 		Convolve(feat, convolved, currentBandWeights);
-		score += convolved;
+		BandSelect(convolved, final, b, 0);
+		try{
+		score += final;
+		} catch (CError err) {
+			printf("OH NOES: the final chapter!");
+		}
 	}
 	score-=getBiasTerm();
 	/******** END TODO ********/
